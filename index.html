@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APK文件下载</title>
+    <style>
+        /* 基础样式 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* 登录容器 - 始终在最上层 */
+        .login-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            z-index: 1000;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .login-container.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-20px);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo h1 {
+            color: #4A00E0;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .logo p {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        .password-form {
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .password-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .password-input {
+            width: 100%;
+            padding: 15px 45px 15px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .password-input:focus {
+            border-color: #4A00E0;
+            outline: none;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+            user-select: none;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #4A00E0, #8E2DE2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(74, 0, 224, 0.3);
+        }
+        
+        .error-message {
+            color: #ff4757;
+            text-align: center;
+            margin-top: 10px;
+            min-height: 20px;
+            font-size: 14px;
+        }
+        
+        .attempts {
+            color: #666;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        
+        /* 主内容容器 - 初始隐藏 */
+        .content-container {
+            padding: 40px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .content-container.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .logout-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .file-list {
+            margin: 30px 0;
+        }
+        
+        .file-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #e9ecef;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .file-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .file-name {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .file-info {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .download-btn {
+            background: #00b894;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .download-btn:hover {
+            background: #00a085;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .security-info {
+            text-align: center;
+            margin-top: 20px;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        /* 禁止文本选择和复制（增加安全性） */
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        /* 密码输入框的特殊样式 */
+        .password-input::placeholder {
+            letter-spacing: 0;
+        }
+        
+        /* 防窥模式 */
+        .security-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            display: none;
+        }
+        
+        .security-mode.active {
+            display: flex;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .login-container, .content-container {
+                padding: 20px;
+            }
+            
+            .logo h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+    <!-- 引入Font Awesome图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- 防窥模式（当页面失去焦点时激活） -->
+    <div class="security-mode" id="securityMode">
+        <i class="fas fa-eye-slash" style="font-size: 3rem; margin-bottom: 20px;"></i>
+        <h2>🔒 安全模式已激活</h2>
+        <p>页面内容已隐藏，请输入密码重新访问</p>
+        <button onclick="reactivate()" style="margin-top: 20px; padding: 10px 20px; background: #4A00E0; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            重新激活
+        </button>
+    </div>
+    
+    <div class="container">
+        <!-- 登录容器（始终显示，直到验证通过） -->
+        <div class="login-container" id="loginContainer">
+            <div class="logo">
+                <h1><i class="fas fa-shield-alt"></i> 安全下载</h1>
+                <p>请输入访问密码以继续</p>
+            </div>
+            
+            <div class="password-form">
+                <div class="password-group">
+                    <input type="password" id="passwordInput" class="password-input" placeholder="请输入访问密码" autocomplete="current-password">
+                    <span class="toggle-password" id="togglePassword">
+                        <i class="far fa-eye"></i>
+                    </span>
+                </div>
+                
+                <button class="login-btn" onclick="checkPassword()">
+                    <i class="fas fa-lock"></i> 验证密码
+                </button>
+                
+                <div class="error-message" id="errorMessage"></div>
+                <div class="attempts" id="attemptsInfo"></div>
+                
+                <div class="security-info">
+                    <p><i class="fas fa-info-circle"></i> 密码错误超过5次将锁定访问</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主内容容器（验证通过后显示） -->
+        <div class="content-container" id="contentContainer">
+            <div class="header">
+                <h2><i class="fas fa-download"></i> APK文件下载</h2>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> 退出
+                </button>
+            </div>
+            
+            <div id="fileListContainer">
+                <div class="loading" id="loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>正在加载文件列表...</p>
+                </div>
+            </div>
+            
+            <div class="security-info">
+                <p><i class="fas fa-clock"></i> 会话将在60分钟后自动过期</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 配置区域 ====================
+        const CONFIG = {
+            // 修改这里的密码（重要！）
+            password: "hlj520", // 替换为你想要的密码
+            
+            // 安全设置
+            maxAttempts: 5,                // 最大尝试次数
+            lockTime: 30,                  // 锁定时间（分钟）
+            sessionTimeout: 60,            // 会话超时时间（分钟）
+            
+            // 文件列表配置
+            filesJsonUrl: "files.json",    // 文件列表JSON的URL
+            enableAutoRefresh: false,      // 是否自动刷新
+            refreshInterval: 30            // 刷新间隔（秒）
+        };
+        
+        // ==================== 状态变量 ====================
+        let loginAttempts = 0;
+        let isLoggedIn = false;
+        let sessionTimer = null;
+        let failedAttempts = JSON.parse(localStorage.getItem('failed_attempts') || '{"count":0,"time":0}');
+        
+        // ==================== 页面加载时初始化 ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查是否在锁定状态
+            checkLockStatus();
+            
+            // 检查是否有有效会话
+            const session = localStorage.getItem('apk_session');
+            if (session) {
+                const sessionData = JSON.parse(session);
+                if (sessionData.expiry > Date.now()) {
+                    // 会话有效，自动登录
+                    isLoggedIn = true;
+                    showContent();
+                    startSessionTimer();
+                } else {
+                    // 会话过期，清除
+                    localStorage.removeItem('apk_session');
+                }
+            }
+            
+            // 设置密码显示/隐藏切换
+            setupPasswordToggle();
+            
+            // 设置回车键提交
+            document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkPassword();
+                }
+            });
+            
+            // 设置页面失去焦点时的防窥模式
+            setupSecurityMode();
+            
+            // 更新尝试次数显示
+            updateAttemptsDisplay();
+        });
+        
+        // ==================== 密码验证函数 ====================
+        function checkPassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const errorMessage = document.getElementById('errorMessage');
+            const password = passwordInput.value.trim();
+            
+            // 检查是否被锁定
+            if (isLocked()) {
+                errorMessage.textContent = '账户已锁定，请稍后再试';
+                return;
+            }
+            
+            // 验证密码
+            if (password === CONFIG.password) {
+                // 密码正确
+                loginSuccess();
+            } else {
+                // 密码错误
+                loginAttempts++;
+                failedAttempts.count++;
+                failedAttempts.time = Date.now();
+                localStorage.setItem('failed_attempts', JSON.stringify(failedAttempts));
+                
+                if (loginAttempts >= CONFIG.maxAttempts) {
+                    // 达到最大尝试次数，锁定
+                    lockAccount();
+                    errorMessage.textContent = `密码错误次数过多，账户已锁定 ${CONFIG.lockTime} 分钟`;
+                } else {
+                    errorMessage.textContent = `密码错误，剩余尝试次数：${CONFIG.maxAttempts - loginAttempts}`;
+                }
+                
+                // 清空输入框
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // 更新显示
+                updateAttemptsDisplay();
+            }
+        }
+        
+        // ==================== 登录成功处理 ====================
+        function loginSuccess() {
+            isLoggedIn = true;
+            
+            // 重置失败尝试
+            failedAttempts.count = 0;
+            failedAttempts.time = 0;
+            localStorage.setItem('failed_attempts', JSON.stringify(failedAttempts));
+            
+            // 创建会话
+            const sessionData = {
+                timestamp: Date.now(),
+                expiry: Date.now() + (CONFIG.sessionTimeout * 60 * 1000)
+            };
+            localStorage.setItem('apk_session', JSON.stringify(sessionData));
+            
+            // 显示主内容
+            showContent();
+            
+            // 开始会话计时
+            startSessionTimer();
+        }
+        
+        // ==================== 显示主内容 ====================
+        function showContent() {
+            // 隐藏登录界面
+            document.getElementById('loginContainer').classList.add('hidden');
+            
+            // 显示内容界面
+            document.getElementById('contentContainer').classList.add('active');
+            
+            // 加载文件列表
+            setTimeout(() => {
+                loadFileList();
+            }, 300);
+        }
+        
+        // ==================== 加载文件列表 ====================
+        async function loadFileList() {
+            try {
+                // 尝试从JSON文件加载
+                const response = await fetch(CONFIG.filesJsonUrl);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    displayFileList(data.files || []);
+                } else {
+                    // 如果JSON文件不存在，使用默认文件列表
+                    const defaultFiles = getDefaultFiles();
+                    displayFileList(defaultFiles);
+                }
+            } catch (error) {
+                console.error('加载文件列表失败:', error);
+                // 使用默认文件列表
+                const defaultFiles = getDefaultFiles();
+                displayFileList(defaultFiles);
+            }
+        }
+        
+        // ==================== 显示文件列表 ====================
+        function displayFileList(files) {
+            const container = document.getElementById('fileListContainer');
+            
+            // 隐藏加载提示
+            document.getElementById('loading').style.display = 'none';
+            
+            if (files.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <h3>暂无文件</h3>
+                        <p>管理员尚未上传任何文件</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const filesHtml = files.map(file => `
+                <div class="file-item">
+                    <div class="file-name">
+                        <i class="fas fa-mobile-alt"></i> ${file.name}
+                    </div>
+                    <div class="file-info">
+                        版本: ${file.version} | 大小: ${formatFileSize(file.size)} | 更新: ${file.date}
+                    </div>
+                    <p style="color: #777; font-size: 14px; margin-bottom: 10px;">${file.description || ''}</p>
+                    <button class="download-btn" onclick="downloadFile('${file.id}')">
+                        <i class="fas fa-download"></i> 下载APK
+                    </button>
+                </div>
+            `).join('');
+            
+            container.innerHTML = `
+                <div class="file-list">
+                    ${filesHtml}
+                </div>
+            `;
+        }
+        
+        // ==================== 下载文件 ====================
+        function downloadFile(fileId) {
+            // 这里应该根据fileId获取实际下载链接
+            // 由于我们使用静态JSON，这里简化处理
+            alert('开始下载...');
+            
+            // 实际下载逻辑，你需要根据你的文件存储方式来实现
+            // 例如：window.open('你的下载链接', '_blank');
+        }
+        
+        // ==================== 退出登录 ====================
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                // 清除会话
+                localStorage.removeItem('apk_session');
+                
+                // 重置状态
+                isLoggedIn = false;
+                
+                // 停止计时器
+                if (sessionTimer) {
+                    clearTimeout(sessionTimer);
+                }
+                
+                // 显示登录界面
+                document.getElementById('contentContainer').classList.remove('active');
+                document.getElementById('loginContainer').classList.remove('hidden');
+                
+                // 清空密码框
+                document.getElementById('passwordInput').value = '';
+                
+                // 重置文件列表容器
+                document.getElementById('fileListContainer').innerHTML = `
+                    <div class="loading" id="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>正在加载文件列表...</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // ==================== 安全功能 ====================
+        function setupPasswordToggle() {
+            const toggleBtn = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('passwordInput');
+            
+            toggleBtn.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                // 切换图标
+                const icon = toggleBtn.querySelector('i');
+                icon.className = type === 'password' ? 'far fa-eye' : 'far fa-eye-slash';
+            });
+        }
+        
+        function setupSecurityMode() {
+            // 当页面失去焦点时激活防窥模式
+            window.addEventListener('blur', function() {
+                if (isLoggedIn) {
+                    document.getElementById('securityMode').classList.add('active');
+                }
+            });
+            
+            // 当页面获得焦点时检查是否需要重新验证
+            window.addEventListener('focus', function() {
+                // 如果防窥模式激活，可能需要重新验证
+                if (document.getElementById('securityMode').classList.contains('active')) {
+                    // 可以要求重新输入密码，这里我们只是关闭防窥模式
+                    // 如果需要更安全，可以调用 logout()
+                }
+            });
+        }
+        
+        function reactivate() {
+            document.getElementById('securityMode').classList.remove('active');
+        }
+        
+        // ==================== 账户锁定功能 ====================
+        function checkLockStatus() {
+            if (isLocked()) {
+                const lockTime = failedAttempts.time + (CONFIG.lockTime * 60 * 1000);
+                const remaining = Math.ceil((lockTime - Date.now()) / 60000);
+                
+                if (remaining > 0) {
+                    document.getElementById('errorMessage').textContent = 
+                        `账户已锁定，请等待 ${remaining} 分钟后再试`;
+                    document.getElementById('passwordInput').disabled = true;
+                    document.querySelector('.login-btn').disabled = true;
+                } else {
+                    // 锁定时间已过，重置
+                    failedAttempts.count = 0;
+                    failedAttempts.time = 0;
+                    localStorage.setItem('failed_attempts', JSON.stringify(failedAttempts));
+                }
+            }
+        }
+        
+        function isLocked() {
+            if (failedAttempts.count >= CONFIG.maxAttempts) {
+                const lockTime = failedAttempts.time + (CONFIG.lockTime * 60 * 1000);
+                return Date.now() < lockTime;
+            }
+            return false;
+        }
+        
+        function lockAccount() {
+            failedAttempts.time = Date.now();
+            localStorage.setItem('failed_attempts', JSON.stringify(failedAttempts));
+            
+            document.getElementById('passwordInput').disabled = true;
+            document.querySelector('.login-btn').disabled = true;
+        }
+        
+        function updateAttemptsDisplay() {
+            const attemptsInfo = document.getElementById('attemptsInfo');
+            const remaining = CONFIG.maxAttempts - loginAttempts;
+            
+            if (remaining <= 3 && remaining > 0) {
+                attemptsInfo.textContent = `剩余尝试次数：${remaining}`;
+                attemptsInfo.style.color = '#ff4757';
+            } else {
+                attemptsInfo.textContent = '';
+            }
+        }
+        
+        // ==================== 会话管理 ====================
+        function startSessionTimer() {
+            // 清除已有计时器
+            if (sessionTimer) {
+                clearTimeout(sessionTimer);
+            }
+            
+            // 设置新计时器
+            sessionTimer = setTimeout(() => {
+                alert('会话已过期，请重新登录');
+                logout();
+            }, CONFIG.sessionTimeout * 60 * 1000);
+        }
+        
+        // ==================== 辅助函数 ====================
+        function getDefaultFiles() {
+            return [
+                {
+                    id: 'app1_v1.0',
+                    name: '示例应用 v1.0',
+                    version: '1.0.0',
+                    size: 5242880,
+                    date: '2024-12-01',
+                    description: '这是一个示例APK文件'
+                },
+                {
+                    id: 'app2_v2.0',
+                    name: '示例应用 v2.0',
+                    version: '2.0.1',
+                    size: 6291456,
+                    date: '2024-12-01',
+                    description: '更新版本，修复已知问题'
+                }
+            ];
+        }
+        
+        function formatFileSize(bytes) {
+            if (!bytes) return '未知大小';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        
+        // ==================== 安全增强 ====================
+        // 防止F12打开开发者工具（可选，但能增加一些安全性）
+        document.onkeydown = function(e) {
+            // 禁用F12
+            if (e.key === 'F12') return false;
+            
+            // 禁用Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+            if (e.ctrlKey && e.shiftKey && e.key === 'I') return false;
+            if (e.ctrlKey && e.shiftKey && e.key === 'J') return false;
+            if (e.ctrlKey && e.key === 'U') return false;
+        };
+        
+        // 禁用右键菜单（可选）
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    </script>
+</body>
+</html>

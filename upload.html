@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员 - APK上传</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; }
+        button { padding: 10px 20px; background: #4A00E0; color: white; border: none; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 15px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📤 管理员上传界面</h1>
+        <p>填写APK文件信息，生成JSON配置</p>
+        
+        <input type="text" id="fileName" placeholder="应用名称">
+        <input type="text" id="fileVersion" placeholder="版本号 (如: 1.0.0)">
+        <input type="number" id="fileSize" placeholder="文件大小 (字节)">
+        <input type="text" id="fileDate" placeholder="日期 (YYYY-MM-DD)">
+        <textarea id="fileDesc" placeholder="文件描述"></textarea>
+        <input type="text" id="downloadUrl" placeholder="下载链接">
+        
+        <button onclick="generateJson()">生成JSON</button>
+        
+        <h3>生成的JSON：</h3>
+        <pre id="jsonOutput"></pre>
+        
+        <button onclick="copyJson()">复制到剪贴板</button>
+        <a href="index.html" style="display: block; margin-top: 20px;">返回下载页面</a>
+    </div>
+    
+    <script>
+        async function generateJson() {
+            // 读取现有的files.json
+            const response = await fetch('files.json');
+            let data = await response.json();
+            
+            // 创建新文件对象
+            const newFile = {
+                id: document.getElementById('fileName').value.toLowerCase().replace(/ /g, '_'),
+                name: document.getElementById('fileName').value,
+                version: document.getElementById('fileVersion').value,
+                size: parseInt(document.getElementById('fileSize').value),
+                date: document.getElementById('fileDate').value,
+                description: document.getElementById('fileDesc').value,
+                downloadUrl: document.getElementById('downloadUrl').value
+            };
+            
+            // 添加到文件列表
+            data.files.push(newFile);
+            data.lastUpdate = new Date().toISOString().split('T')[0];
+            
+            // 显示JSON
+            document.getElementById('jsonOutput').textContent = JSON.stringify(data, null, 2);
+        }
+        
+        function copyJson() {
+            const jsonText = document.getElementById('jsonOutput').textContent;
+            navigator.clipboard.writeText(jsonText);
+            alert('已复制到剪贴板');
+        }
+    </script>
+</body>
+</html>
