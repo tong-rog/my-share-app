@@ -1,32 +1,23 @@
 {
-  "lastUpdate": "2026-1-03",
+  "lastUpdate": "2026-01-03",
   "files": [
     {
-      "id": "myapp_v5.0.0",
-      "name": "游咔v5.0.0",
+      "id": "youka_v5.0.0",
+      "name": "游咔",
       "version": "5.0.0",
-      "size": 59,810,775.04,
-      "date": "2025-1-03",
-      "description": "游咔",
+      "size": 59810775,
+      "date": "2026-01-03",
+      "description": "游咔应用",
       "downloadUrl": "https://github.com/tong-rog/my-share-app/releases/download/v5.0.0/_5.0.0.apk"
     },
     {
-      "id": "myapp_v1.1",
-      "name": "我的应用 v1.1",
-      "version": "1.1.0",
-      "size": 6291456,
-      "date": "2024-12-02",
-      "description": "修复bug，优化性能",
-      "downloadUrl": "https://github.com/YOUR_USERNAME/YOUR_REPO/releases/download/v1.1/myapp.apk"
-    },
-    {
-      "id": "toolbox_v2.0",
-      "name": "工具箱 v2.0",
-      "version": "2.0.0",
-      "size": 10485760,
-      "date": "2024-12-03",
-      "description": "多功能工具箱，包含多种实用工具",
-      "downloadUrl": "https://github.com/YOUR_USERNAME/YOUR_REPO/releases/download/v2.0/toolbox.apk"
+      "id": "laowang_v2.0.5",
+      "name": "老王",
+      "version": "2.0.5",
+      "size": 2579892,
+      "date": "2026-01-03",
+      "description": "老王应用",
+      "downloadUrl": "https://github.com/tong-rog/my-share-app/releases/download/v2.0.5/_2.0.5.apk"
     }
   ]
 }
