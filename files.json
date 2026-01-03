@@ -1,14 +1,14 @@
 {
-  "lastUpdate": "2024-12-01",
+  "lastUpdate": "2026-1-03",
   "files": [
     {
-      "id": "myapp_v1.0",
-      "name": "我的应用 v1.0",
-      "version": "1.0.0",
-      "size": 5242880,
-      "date": "2024-12-01",
-      "description": "第一个版本，包含基础功能",
-      "downloadUrl": "https://github.com/YOUR_USERNAME/YOUR_REPO/releases/download/v1.0/myapp.apk"
+      "id": "myapp_v5.0.0",
+      "name": "游咔v5.0.0",
+      "version": "5.0.0",
+      "size": 59,810,775.04,
+      "date": "2025-1-03",
+      "description": "游咔",
+      "downloadUrl": "https://github.com/tong-rog/my-share-app/releases/download/v5.0.0/_5.0.0.apk"
     },
     {
       "id": "myapp_v1.1",
